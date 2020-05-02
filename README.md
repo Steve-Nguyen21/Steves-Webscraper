@@ -1,5 +1,6 @@
-# Webscraper
-Webscrape GPU and HD
+                                            # Webscraper
+"""
+Webscrape GPU and HD for new-eggs website
 
 Here is the new program made by Steve as a side project.
 
@@ -14,10 +15,12 @@ Instructions to unzip the file:
 
 1. Right click on the file, click on extract all.
 
-2. Contact me to attain the password to open the file
+2. Contact me to obtain the password to open the file
 
 3. The file should be extracted onto your desktop.
 
 If you cannot unzip the file, try downloading 7zip and extract it using that software.
 
 7zip link: https://www.7-zip.org/download.html
+
+"""
