@@ -1,0 +1,257 @@
+#webscrape packages
+from urllib.request import urlopen as uReq #Calls urlopen by uReq.
+from bs4 import BeautifulSoup as soup #can call bs4 as soup
+import os, smtplib, ssl
+#for email formatting
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+#for sending attachments
+from email.mime.base import MIMEBase as MimeB
+from email import encoders
+
+#functions
+def webscrapeGPU():
+"""Gets GPU prices and creates a CSV"""
+    gpu_url = "https://www.newegg.com/Video-Cards-Video-Devices/Category/ID-38?Tpk=graphics%20card"
+ 
+# Opening the connection, grabbing the page, and downloads it
+    uClient = uReq(gpu_url)
+    page_html = uClient.read()
+    uClient.close()
+    page_soup = soup(page_html, "html.parser")
+    containers = page_soup.findAll("div", {"class": "item-container"})
+    filename = "gpu_price.csv"
+    f = open(filename, "w")
+    headers = "Name, Brand, Shipping, Price and offers\n"
+    f.write(headers)
+    f.write("Graphics Cards Prices: \n\n")
+    for container in containers:
+        try:
+            product_brand = container.find("div", "item-info").div.a.img["title"]
+        except Exception as e:
+            product_brand = "NA"
+             # looks for all classes, that gives me "item-title"
+        title_container = container.findAll("a", {"class": "item-title"})
+         #.text grabs the text from the list [0] (grabs the text inside the a> tag)
+        product_name = title_container[0].text
+ 
+        shipping_container = container.findAll("li", {"class": "price-ship"})
+             #grabs text and removes all white space with .strip
+        product_shipping = shipping_container[0].text.strip()
+
+        price_container = container.findAll("li", {"class": "price-current"})
+
+        price_product = price_container[0].text.strip()
+
+     #replaced with pipe
+        f.write(product_name.replace(",", "|") + "," + product_brand + "," + product_shipping + "," + price_product.replace(",", ""))
+    f.close()
+    print("Prices have been recorded for GPUs.")
+
+def harddriveScrape():
+	"""Gets HD prices and creates a CSV"""
+    hd_url = "https://www.newegg.com/Hard-Drives/Category/ID-15?Tpk=hard%20drives"
+    uClient = uReq(hd_url)
+    page_html = uClient.read()
+    uClient.close()
+    page_soup = soup(page_html, "html.parser")
+    containers = page_soup.findAll("div", {"class": "item-container"})
+    filename = "harddrive_price.csv"
+    f = open(filename, "w")
+    headers = "Name, Brand, Shipping, Price and offers\n"
+    f.write(headers)
+    f.write("\n\nHard drives prices: \n\n")
+    for container in containers:
+        try:
+            product_brand = container.find("div", "item-info").div.a.img["title"]
+        except Exception as e:
+            product_brand = "NA"
+            
+        title_container = container.findAll("a", {"class": "item-title"})
+        
+        product_name = title_container[0].text
+ 
+        shipping_container = container.findAll("li", {"class": "price-ship"})
+
+        product_shipping = shipping_container[0].text.strip()
+
+        price_container = container.findAll("li", {"class": "price-current"})
+
+        price_product = price_container[0].text.strip()
+
+        f.write(product_name.replace(",", "|") + "," + product_brand + "," + product_shipping + "," + price_product.replace(",", ""))
+    f.close()
+    print("Prices have been recorded for Hard drives.")
+    
+def openFile():
+	""" asks user if they want to open the file. It opens the file according to user's answer"""
+    user_response = input("\n\nWould you like to open the file? Please type Yes or No:\t").lower()
+    yes = ["yes","y"]
+    no = ["no","n"]
+    if user_response in yes:
+        print("\n\n\t\tYou chose option number: "+ user_choice)
+        print("\nNote: Choose the same option you picked for the price fetch.")
+        print("\n\nOptions:\n\n1.HD - Hard drives \n\n2.GPU - Graphics Cards\n\n3.Both - GPU & Graphics cards")
+        try:
+            choices = input("Which file would you like to open?\n\n ").lower()
+            if choices in gpu_option:
+                os.startfile("gpu_price.csv")
+                print("\nPlease wait, opening file now....\n")
+            elif choices in hd_option:
+                os.startfile("harddrive_price.csv")
+                print("\nPlease wait, opening file now....\n")
+            elif choices in both_option:
+                bothfile = "all_prices.csv"
+                with open("gpu_price.csv") as gpu:
+                    with open("harddrive_price.csv") as hd:
+                        with open(bothfile, "w") as bothfiles:
+                            for lines in gpu:
+                                bothfiles.write(lines)
+                                for hdlines in hd:
+                                    bothfiles.write(hdlines)
+                os.startfile("all_prices.csv")
+        except:
+            print("You have entered the wrong option.")
+            choices = input("Which file would you like to open?\n\n ").lower()
+    elif user_response in no:
+        print("Ok, moving on\n")
+    else:
+        print("Invalid input. File will not be opened.\n")
+            
+
+
+
+def sendEmail():
+"""Prompts user if they want to send an email containing the attachment. Gives an option to use their own or a hard coded one."""
+    print("Note: This will currently only send an email of GPU prices.\n\n")
+    prompt_sendemail = input("Would you like to send an email? Please enter Yes or No. ")
+    sending = ("yes", "y", "yee", "ye", "ok")
+    decline = ["no", "n", "nah", "na"]
+
+    if prompt_sendemail.lower() in sending:
+        try:
+            own_email = input("Would you like to use your own email? Please enter Yes or No: ")
+            if own_email.lower() in sending:
+                #gmail variables
+                smtp_server = "smtp.gmail.com"
+                port = 465
+                #Declaring variables for email login and send
+                try:
+                    sender_email = input("What is your Gmail to login? ")
+                    password = input("What is your password?")
+                    pwd_list = (".txt")
+                    if pwd_list in password:
+                        pwd_open = open(password, "r")
+                        lines = pwd_open.readlines()
+                        password = lines[0]
+                        pwd_open.close()
+                except FileNotFoundError:
+                    password = input("Please enter a valid password or file path")
+                        
+                recipient = input("Who would you like to send this email to?  ")
+                
+                #email message
+                subject = "GPU Prices"
+                message = MIMEMultipart()
+                message["From"] = sender_email
+                message["To"] = recipient
+                message["Subject"] = subject
+           
+                body = "Hello, \nHere are the prices for GPUS from New-Egg as requested. \n\nBest regards, \n\nSteve's webscraping script"
+                message.attach(MIMEText(body, "plain"))
+
+                #send file
+                
+                filename = "gpu_price.csv"
+                attachment = open(filename,"rb")
+                part = MimeB("Application","octet-stream")
+                part.set_payload((attachment).read())
+                encoders.encode_base64(part)
+                part.add_header("Content-Disposition", "attachment; filename= "+filename)
+                message.attach(part)
+                text = message.as_string()
+                print("\n\nYour message has been sent along with the attachment.")
+                with smtplib.SMTP_SSL(smtp_server,port) as server:
+                        server.login(sender_email ,password)
+                        server.sendmail(sender_email, recipient, text)
+            elif own_email in decline:
+                print("\nOkay, we'll use mine.")
+                #gmail variables
+                smtp_server = "smtp.gmail.com"
+                port = 465
+                #Declaring variables for email login and send
+                sender_email = "Your email here"
+                password = "Enter your password here"        
+                recipient = input("Who would you like to send this email to?  ")
+                #email message
+                subject = "GPU Prices"
+                message = MIMEMultipart()
+                message["From"] = sender_email
+                message["To"] = recipient
+                message["Subject"] = subject
+                body = "Hello, \nHere are the prices for GPUS from New-Egg as requested. \n\n Best regards, \n\nSteve's webscraping script"
+                message.attach(MIMEText(body, "plain"))
+                #send file
+                filename = "gpu_price.csv"
+                attachment = open(filename,"rb")
+                part = MimeB("Application","octet-stream")
+                part.set_payload((attachment).read())
+                encoders.encode_base64(part)
+                part.add_header("Content-Disposition", "attachment; filename= "+filename)
+                message.attach(part)
+                text = message.as_string()
+                print("\n\nYour message has been sent along with the attachment.")
+                with smtplib.SMTP_SSL(smtp_server,port) as server:
+                        server.login(sender_email ,password)
+                        server.sendmail(sender_email, recipient, text)
+        except Exception as e:
+            print("The error: ", e, "\nhas occurred. Please change your security settings on your email/Enter the correct information/ or contact Steve for help")
+    elif prompt_sendemail.lower() in decline:
+        print("Okay, that's the end of the program.")
+    else:
+        print("\nInvalid input!!!!")
+        print("\nThat's the end of the program.")
+
+    
+#end of functions
+
+
+        
+                                                                                    #main program
+restart = True
+
+while restart:
+    no = "0"
+    gpu_option = ("gpu", "graphics card", "gp", "g","gc", "graphics cards", "2")
+    hd_option = ("hd","harddrive","hard drives", "1")
+    both_option = ("both", "bo", "bothh", "b", "gpu & hd", "gpu and hd", "3")
+    help_option = ("help", "h", "hel","help!", "4")
+    print("***\n\nWelcome to Steve's Webscraper. This program currently only fetches the prices of Graphics cards and Hard drives on New-Egg\n\n\n***")
+    print("\nPlease enter the options below to start scraping.")
+    print("\n\nOptions:\n\n1. HD\n\n2. GPU\n\n3. Both\n\n4. Help\n\n")
+    try:
+        user_choice = input("What would you like to get the price of? Enter the keywords above: ").lower()
+        while user_choice in help_option:
+            print("\nYou have requested for help. Here are the keywords:\n\n1. HD - Hard Drive\n\n2. GPU - Graphics Cards\n\n3. Both - Graphics Cards and Hard Drive Prices\n\n4. Help")
+            user_choice = input("\nWhat would you like to get the price of? Enter the keywords or number listed above: \n").lower()
+        if user_choice in gpu_option:
+            webscrapeGPU()
+        elif user_choice in hd_option:
+            harddriveScrape()
+        elif user_choice in both_option:
+            webscrapeGPU()
+            harddriveScrape()
+        else:
+            print("\nYou have entered an invalid input")
+            user_choice = input("\nWhat would you like to get the price of? Enter the keywords above: \n").lower()
+    except:
+        print("You have entered an invalid input")
+        user_choice = input("\nWhat would you like to webscrape? Enter the keywords above: ").lower()
+    openFile()
+    sendEmail()
+    again = input("\n\nWould you like to start the program again? Press 0 to exit: ")
+    if again == no:
+        restart = False
+    
+print("\n\nThank you for using this webscraper by Steve Nguyen")
+
