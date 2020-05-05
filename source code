@@ -30,20 +30,15 @@ def webscrapeGPU():
             product_brand = container.find("div", "item-info").div.a.img["title"]
         except Exception as e:
             product_brand = "NA"
-             # looks for all classes, that gives me "item-title"
         title_container = container.findAll("a", {"class": "item-title"})
-         #.text grabs the text from the list [0] (grabs the text inside the a> tag)
         product_name = title_container[0].text
- 
+	
         shipping_container = container.findAll("li", {"class": "price-ship"})
-             #grabs text and removes all white space with .strip
         product_shipping = shipping_container[0].text.strip()
 
         price_container = container.findAll("li", {"class": "price-current"})
-
         price_product = price_container[0].text.strip()
 
-     #replaced with pipe
         f.write(product_name.replace(",", "|") + "," + product_brand + "," + product_shipping + "," + price_product.replace(",", ""))
     f.close()
     print("Prices have been recorded for GPUs.")
@@ -118,8 +113,6 @@ def openFile():
     else:
         print("Invalid input. File will not be opened.\n")
             
-
-
 
 def sendEmail():
 """Prompts user if they want to send an email containing the attachment. Gives an option to use their own or a hard coded one."""
